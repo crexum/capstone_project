@@ -1,0 +1,30 @@
+---
+- name: Verify Branch Configuration State
+  hosts: switches
+  gather_facts: false
+
+  tasks:
+    - name: Retrieve VLAN Information
+      cisco.ios.ios_command:
+        commands: show vlan brief
+      register: vlan_output
+
+    - name: Validate Data VLAN Exists
+      ansible.builtin.assert:
+        that:
+          - "'Data_VLAN' in vlan_output.stdout[0]"
+          - "'10' in vlan_output.stdout[0]"
+        success_msg: "PASS: Data VLAN 10 is configured."
+        fail_msg: "FAIL: Data VLAN 10 is missing."
+
+    - name: Retrieve Running Configuration for NTP
+      cisco.ios.ios_command:
+        commands: show run | include ntp server
+      register: ntp_output
+
+    - name: Validate NTP Server Configuration
+      ansible.builtin.assert:
+        that:
+          - "'10.0.0.5' in ntp_output.stdout[0]"
+        success_msg: "PASS: NTP Server is correctly configured."
+        fail_msg: "FAIL: NTP Server configuration is missing or incorrect."
